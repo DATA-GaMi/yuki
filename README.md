@@ -59,3 +59,8 @@ $ ./cnc.out
 ```
 そしたら、コンパイルしたbot.exeとtor.exeを同時にターゲットに送信してください。<br>
 そのときにtor.exeを隠しファイルに設定してzipファイルにして送るといいことがあります。
+
+## 参考資料
+[RAT](https://github.com/ware255/RAT) <br>
+[ Working with Tor (C/C++) ](https://gist.github.com/anhldbk/f62fbe5e5a0e48740c6959e3e0907c81) <br>
+[ Simple keylogger in C++ ](https://gist.github.com/cdohara/99f3ac257b6f98d723818aedd1c39a4e)
