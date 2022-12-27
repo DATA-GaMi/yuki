@@ -59,6 +59,15 @@ $ ./cnc.out
 ```
 そしたら、コンパイルしたbot.exeを乗っ取りたい相手に送ってください。<br>
 <br>
+乗っ取りに成功しましたら`help`をつかってどのコマンドが使えるか確認することができます。
+```
+root@cnc:~$ help
+Command List
+       pwd       - view current directory
+       keylogger - get the characters you entered
+```
+keyloggerとコマンドを使った場合、Ctrl+Cで閉じないと終わる方法がありませんので注意。<br>
+(あとで、C&Cサーバの起動に時間がかかることには目を瞑って...)
 
 ## 参考資料
 [RAT](https://github.com/ware255/RAT) <br>
