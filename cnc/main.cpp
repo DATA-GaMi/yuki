@@ -22,7 +22,7 @@ void logo() {
     std::cout << "\t   \\__, | \\__,_||_|\\_\\|_|" << std::endl;
     std::cout << "\t    __/ |" << std::endl;
     std::cout << "\t   |___/" << NC << std::endl;
-    std::cout << GREEN << "\n\t\t[ ver 2.0 ]" << NC << std::endl;
+    std::cout << GREEN << "\n\t\t[ ver 2.5 ]" << NC << std::endl;
     std::cout << "\nloading..." << std::endl;
 }
 
