@@ -13,6 +13,7 @@
 #include <wininet.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <tlhelp32.h>
 
 #define MAX                 65536
 #define cnc_onion_server    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.onion"
