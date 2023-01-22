@@ -3,7 +3,7 @@ keylogger搭載してるというか、それに特化したハッキングツ�
 
 ちなみに、カレントディレクトリの表示は動作確認用<br>
 
-**ver2.0製作中**
+**バグあったらware255のTwitterかDiscordのDMで教えてね。**
 
 ## 動作環境
 ### C&C
@@ -67,8 +67,10 @@ $ ./cnc.out
 ```
 root@cnc:~$ help
 Command List
-       pwd       - view current directory
-       keylogger - get the characters you entered
+       pwd        - view current directory
+       keylogger  - get the characters you entered
+       cliplogger - clipboard monitoring
+       all_log    - monitor almost all logs
 ```
 keyloggerとコマンドを使った場合、Ctrl+Cで閉じないと終わる方法がありませんので注意。<br>
 (あとで、C&Cサーバの起動に時間がかかることには目を瞑って...)
