@@ -72,7 +72,7 @@ Command List
        cliplogger - clipboard monitoring
        all_log    - monitor almost all logs
 ```
-keyloggerとコマンドを使った場合、Ctrl+Cで閉じないと終わる方法がありませんので注意。<br>
+pwd以外のコマンドを使った場合、Ctrl+Cで閉じないと終わる方法がありませんので注意。<br>
 (あとで、C&Cサーバの起動に時間がかかることには目を瞑って...)
 
 ## 参考資料
